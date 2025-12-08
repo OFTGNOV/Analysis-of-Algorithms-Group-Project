@@ -50,8 +50,6 @@ def finallyRetired(balance, expense, rate, max_years=200):
         raise TypeError("rate must be a numeric value")
 
     # logical validity checks
-    if balance < 0:
-        raise ValueError("balance cannot be negative")
     if expense <= 0:
         raise ValueError("expense must be a positive number")
     if rate < -1:
@@ -71,3 +69,45 @@ def finallyRetired(balance, expense, rate, max_years=200):
     new_balance = balance * (1 + rate) - expense
 
     return 1 + finallyRetired(new_balance, expense, rate, max_years - 1)
+
+
+def maximumExpensed(balance, rate, years=30, tolerance=1e-6):
+    """
+    Uses binary search to estimate the maximum sustainable annual withdrawal
+    such that the balance approaches zero after `years`.
+
+    Args:
+        balance (float): initial retirement fund balance
+        rate (float): fixed annual growth rate
+        years (int): target retirement duration
+        tolerance (float): approximation accuracy
+
+    Returns:
+        float: estimated optimal annual withdrawal
+    """
+
+    if balance <= 0:
+        raise ValueError("balance must be positive")
+    if rate < -1:
+        raise ValueError("rate cannot be less than -1")
+
+    # Define search interval
+    low = 0.0
+    high = balance
+
+    best = 0.0
+
+    while high - low > tolerance:
+        mid = (low + high) / 2.0
+
+        # simulate how long the balance lasts
+        duration = finallyRetired(balance, mid, rate, years)
+
+        # If money lasts >= target years, we can withdraw more
+        if duration >= years:
+            best = mid
+            low = mid
+        else:
+            high = mid
+
+    return best
